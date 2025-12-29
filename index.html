@@ -79,7 +79,10 @@
       <!-- 步驟 2: 填寫表單 (初始隱藏) -->
       <div id="step2" class="space-y-6 hidden">
         <div id="foundDataBox" class="bg-indigo-50 p-4 rounded-lg mb-6">
-          <p class="text-sm text-indigo-800 font-medium mb-2">✓ 已找到匹配資料</p>
+          <p class="text-sm text-indigo-800 font-medium mb-2">
+            ✓ 已找到匹配資料
+            <span id="matchCount" class="ml-2 px-2 py-1 bg-indigo-600 text-white text-xs rounded-full"></span>
+          </p>
           <div id="foundDataDetails" class="text-xs text-indigo-700 space-y-1 mt-3 border-t border-indigo-200 pt-3"></div>
         </div>
 
@@ -191,6 +194,14 @@
       inputText.value = '';
       foundData = null;
       hideMessage();
+      
+      // ✅ 重置匹配筆數顯示
+      const matchCount = document.getElementById('matchCount');
+      if (matchCount) {
+        matchCount.textContent = '';
+      }
+      foundDataDetails.innerHTML = '';
+      
       stepLine.classList.add('bg-gray-300');
       stepLine.classList.remove('bg-indigo-600');
       step2Circle.classList.add('bg-gray-300');
@@ -309,13 +320,30 @@
         if (data.found) {
           foundData = data;
           
-          // 顯示找到的資料
-          foundDataDetails.innerHTML = `
-            <p><strong>金額:</strong> ${data.data.amount || '無'}</p>
-            <p><strong>付款銀行:</strong> ${data.data.bank || '無'}</p>
-          `;
+          // ✅ 顯示筆數
+          const matchCount = document.getElementById('matchCount');
+          if (matchCount) {
+            matchCount.textContent = `共 ${data.count || data.matches?.length || 1} 筆`;
+          }
           
-          showMessage('success', `找到匹配資料! (第 ${data.row} 行)`);
+          // ✅ 顯示所有匹配的資料（簡化版：只顯示金額和付款銀行）
+          const matches = data.matches || [{ row: data.row, data: data.data }];
+          let detailsHTML = '';
+          
+          matches.forEach((match, index) => {
+            detailsHTML += `
+              <div class="mb-3 pb-3 ${index < matches.length - 1 ? 'border-b border-indigo-200' : ''}">
+                <p class="font-semibold text-indigo-900 mb-1">第 ${index + 1} 筆 - 第 ${match.row} 行</p>
+                <p><strong>金額:</strong> ${match.data.amount || '無'}</p>
+                <p><strong>付款銀行:</strong> ${match.data.bank || '無'}</p>
+              </div>
+            `;
+          });
+          
+          foundDataDetails.innerHTML = detailsHTML;
+          
+          const totalCount = data.count || matches.length;
+          showMessage('success', `找到 ${totalCount} 筆匹配資料!`);
           goToStep2();
         } else {
           showMessage('error', data.message || '未找到匹配的資料');
@@ -325,7 +353,7 @@
         showMessage('error', '查詢時發生錯誤: ' + error.message);
       } finally {
         searchBtn.disabled = false;
-        searchBtn.innerHTML = '🔍 查詢資料';
+        searchBtn.innerHTML = '🔍 開始查詢';
       }
     });
 
@@ -341,33 +369,57 @@
 
       // 顯示載入中
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<div class="spinner"></div>提交中...';
+      submitBtn.innerHTML = '<div class="spinner"></div>送出中...';
       hideMessage();
 
-      console.log('📤 開始提交:', { row: foundData.row, numValue, textValue });
+      // ✅ 取得所有需要更新的 row
+      const matches = foundData.matches || [{ row: foundData.row }];
+      const totalRows = matches.length;
+      
+      console.log('📤 開始提交:', { 
+        totalRows: totalRows, 
+        rows: matches.map(m => m.row),
+        numValue, 
+        textValue 
+      });
 
       try {
-        // ✅ 改用修正後的呼叫方式
-        const data = await callAppsScript('update', {
-          row: foundData.row,
-          columnG: numValue,
-          columnH: textValue
+        // ✅ 對所有匹配的 row 都執行更新
+        const updatePromises = matches.map(async (match, index) => {
+          console.log(`📝 更新第 ${index + 1}/${totalRows} 筆: 第 ${match.row} 行`);
+          return await callAppsScript('update', {
+            row: match.row,
+            columnG: numValue,
+            columnH: textValue
+          });
         });
 
-        console.log('📦 回應資料:', data);
+        // 等待所有更新完成
+        const results = await Promise.all(updatePromises);
+        
+        // 檢查是否有失敗的更新
+        const failedUpdates = results.filter(r => !r.success);
+        const successCount = results.length - failedUpdates.length;
 
-        if (data.success) {
-          showMessage('success', '資料已成功回寫至 Google Sheets!');
+        console.log('📦 更新結果:', { 
+          total: results.length, 
+          success: successCount, 
+          failed: failedUpdates.length 
+        });
+
+        if (failedUpdates.length === 0) {
+          showMessage('success', `資料已成功回寫至 ${successCount} 筆 Google Sheets 資料!`);
           setTimeout(() => resetForm(), 3000);
         } else {
-          showMessage('error', data.error || '回寫失敗,請重試');
+          const errorMessages = failedUpdates.map(r => r.error || '未知錯誤').join(', ');
+          showMessage('error', `${successCount} 筆成功，${failedUpdates.length} 筆失敗: ${errorMessages}`);
         }
       } catch (error) {
         console.error('❌ 提交錯誤:', error);
         showMessage('error', '提交時發生錯誤: ' + error.message);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '📤 提交';
+        submitBtn.innerHTML = '📤 送出資料';
       }
     });
 
