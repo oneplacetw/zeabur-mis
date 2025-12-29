@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收款資料查詢系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #4F46E5;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+  <div id="app" class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">收款資料查詢</h1>
+        <p class="text-gray-600">永豐銀行收款通知管理</p>
+      </div>
+
+      <!-- 步驟指示器 -->
+      <div id="stepIndicator" class="flex items-center justify-center mb-8">
+        <div class="flex items-center text-indigo-600">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-600 text-white font-medium">1</div>
+          <span class="ml-2 text-sm font-medium">查詢</span>
+        </div>
+        <div id="stepLine" class="w-16 h-1 mx-2 bg-gray-300"></div>
+        <div class="flex items-center text-gray-400">
+          <div id="step2Circle" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-300 font-medium">2</div>
+          <span class="ml-2 text-sm font-medium">填寫</span>
+        </div>
+      </div>
+
+      <!-- 訊息區 -->
+      <div id="messageBox" class="mb-6 hidden"></div>
+
+      <!-- 步驟 1: 查詢表單 -->
+      <div id="step1" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">末5碼數字 (F 欄過濾後)</label>
+          <input
+            type="text"
+            id="searchNumber"
+            placeholder="請輸入5位數字"
+            maxlength="5"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <p class="text-xs text-gray-500 mt-1">輸入 F 欄備註說明過濾後的末5碼數字</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">日期 (D 欄 Email 收到日期)</label>
+          <input
+            type="date"
+            id="searchDate"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <p class="text-xs text-gray-500 mt-1">需與 D 欄日期完全匹配</p>
+        </div>
+
+        <button
+          id="searchBtn"
+          class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+        >
+          🔍 查詢資料
+        </button>
+      </div>
+
+      <!-- 步驟 2: 填寫表單 (初始隱藏) -->
+      <div id="step2" class="space-y-6 hidden">
+        <div id="foundDataBox" class="bg-indigo-50 p-4 rounded-lg mb-6">
+          <p class="text-sm text-indigo-800 font-medium mb-2">✓ 已找到匹配資料</p>
+          <div id="foundDataDetails" class="text-xs text-indigo-700 space-y-1 mt-3 border-t border-indigo-200 pt-3"></div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">數字 (寫入 G 欄)</label>
+          <input
+            type="text"
+            id="inputNumber"
+            placeholder="請輸入數字"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">文字 (寫入 H 欄)</label>
+          <textarea
+            id="inputText"
+            placeholder="請輸入文字"
+            rows="4"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+          ></textarea>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            id="resetBtn"
+            class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+          >
+            重新查詢
+          </button>
+          <button
+            id="submitBtn"
+            class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+          >
+            📤 提交
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ 已更新為最新的部署 URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqFhCW_LUZYSKK2NImsBJUyRxUhF1f4vtvqRh7omyGmbD1GBQFLTGLeEIGWAo40Eve/exec';
+    
+    let foundData = null;
+
+    // 取得元素
+    const searchNumberInput = document.getElementById('searchNumber');
+    const searchDateInput = document.getElementById('searchDate');
+    const searchBtn = document.getElementById('searchBtn');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const messageBox = document.getElementById('messageBox');
+    const inputNumber = document.getElementById('inputNumber');
+    const inputText = document.getElementById('inputText');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const foundDataDetails = document.getElementById('foundDataDetails');
+    const stepLine = document.getElementById('stepLine');
+    const step2Circle = document.getElementById('step2Circle');
+
+    // 限制只能輸入數字,最多5位
+    searchNumberInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+    });
+
+    // 顯示訊息
+    function showMessage(type, text) {
+      messageBox.className = `mb-6 p-4 rounded-lg flex items-center ${
+        type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+      }`;
+      messageBox.innerHTML = `
+        <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
+            type === 'success' 
+              ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' 
+              : 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+          }" />
+        </svg>
+        <span class="text-sm">${text}</span>
+      `;
+      messageBox.classList.remove('hidden');
+    }
+
+    function hideMessage() {
+      messageBox.classList.add('hidden');
+    }
+
+    // 切換到步驟2
+    function goToStep2() {
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+      stepLine.classList.remove('bg-gray-300');
+      stepLine.classList.add('bg-indigo-600');
+      step2Circle.classList.remove('bg-gray-300');
+      step2Circle.classList.add('bg-indigo-600', 'text-white');
+      step2Circle.parentElement.classList.remove('text-gray-400');
+      step2Circle.parentElement.classList.add('text-indigo-600');
+    }
+
+    // 重置表單
+    function resetForm() {
+      step1.classList.remove('hidden');
+      step2.classList.add('hidden');
+      searchNumberInput.value = '';
+      searchDateInput.value = '';
+      inputNumber.value = '';
+      inputText.value = '';
+      foundData = null;
+      hideMessage();
+      stepLine.classList.add('bg-gray-300');
+      stepLine.classList.remove('bg-indigo-600');
+      step2Circle.classList.add('bg-gray-300');
+      step2Circle.classList.remove('bg-indigo-600', 'text-white');
+      step2Circle.parentElement.classList.add('text-gray-400');
+      step2Circle.parentElement.classList.remove('text-indigo-600');
+    }
+
+    // 查詢功能
+    searchBtn.addEventListener('click', async () => {
+      const number = searchNumberInput.value;
+      const date = searchDateInput.value;
+
+      if (!number || !date) {
+        showMessage('error', '請輸入末5碼數字和日期');
+        return;
+      }
+
+      if (number.length !== 5) {
+        showMessage('error', '請輸入完整的5位數字');
+        return;
+      }
+
+      // 顯示載入中
+      searchBtn.disabled = true;
+      searchBtn.innerHTML = '<div class="spinner"></div>查詢中...';
+      hideMessage();
+
+      console.log('🔍 開始查詢:', { number, date });
+      console.log('📡 API URL:', SCRIPT_URL);
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'search',
+            number: number,
+            date: date
+          })
+        });
+
+        console.log('📥 收到回應:', response.status);
+        
+        const data = await response.json();
+        console.log('📦 回應資料:', data);
+
+        if (data.found) {
+          foundData = data;
+          
+          // 顯示找到的資料
+          foundDataDetails.innerHTML = `
+            <p><strong>第 ${data.row} 行</strong></p>
+            <p><strong>付款人:</strong> ${data.data.payer || '無'}</p>
+            <p><strong>金額:</strong> ${data.data.amount || '無'}</p>
+            <p><strong>付款銀行:</strong> ${data.data.bank || '無'}</p>
+            <p><strong>Email 日期:</strong> ${data.data.emailDate || '無'}</p>
+            <p><strong>備註說明:</strong> ${data.data.memo || '無'}</p>
+          `;
+          
+          showMessage('success', `找到匹配資料! (第 ${data.row} 行)`);
+          goToStep2();
+        } else {
+          showMessage('error', data.message || '未找到匹配的資料');
+        }
+      } catch (error) {
+        console.error('❌ 查詢錯誤:', error);
+        showMessage('error', '查詢時發生錯誤: ' + error.message);
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = '🔍 查詢資料';
+      }
+    });
+
+    // 提交功能
+    submitBtn.addEventListener('click', async () => {
+      const numValue = inputNumber.value;
+      const textValue = inputText.value;
+
+      if (!numValue || !textValue) {
+        showMessage('error', '請完整填寫數字和文字');
+        return;
+      }
+
+      // 顯示載入中
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner"></div>提交中...';
+      hideMessage();
+
+      console.log('📤 開始提交:', { row: foundData.row, numValue, textValue });
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update',
+            row: foundData.row,
+            columnG: numValue,
+            columnH: textValue
+          })
+        });
+
+        console.log('📥 收到回應:', response.status);
+        
+        const data = await response.json();
+        console.log('📦 回應資料:', data);
+
+        if (data.success) {
+          showMessage('success', '資料已成功回寫至 Google Sheets!');
+          setTimeout(() => resetForm(), 3000);
+        } else {
+          showMessage('error', data.error || '回寫失敗,請重試');
+        }
+      } catch (error) {
+        console.error('❌ 提交錯誤:', error);
+        showMessage('error', '提交時發生錯誤: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '📤 提交';
+      }
+    });
+
+    // 重新查詢按鈕
+    resetBtn.addEventListener('click', resetForm);
+
+    // 頁面載入完成
+    console.log('✅ 頁面已載入完成');
+    console.log('📡 API URL:', SCRIPT_URL);
+  </script>
+</body>
+</html>
