@@ -316,6 +316,12 @@
         });
 
         console.log('📦 回應資料:', data);
+        console.log('📦 回應格式檢查:', {
+          hasCount: 'count' in data,
+          hasMatches: 'matches' in data,
+          hasRow: 'row' in data,
+          hasData: 'data' in data
+        });
 
         if (data.found) {
           foundData = data;
@@ -323,11 +329,17 @@
           // ✅ 顯示筆數
           const matchCount = document.getElementById('matchCount');
           if (matchCount) {
-            matchCount.textContent = `共 ${data.count || data.matches?.length || 1} 筆`;
+            // 優先使用新格式的 count，否則使用 matches 陣列長度，最後才用舊格式的單筆
+            const count = data.count || (data.matches ? data.matches.length : 1);
+            matchCount.textContent = `共 ${count} 筆`;
+            console.log('📊 顯示筆數:', count);
           }
           
           // ✅ 顯示所有匹配的資料（簡化版：只顯示金額和付款銀行）
-          const matches = data.matches || [{ row: data.row, data: data.data }];
+          // 優先使用新格式的 matches，否則轉換舊格式為陣列
+          const matches = data.matches || (data.row ? [{ row: data.row, data: data.data }] : []);
+          console.log('📋 匹配資料陣列:', matches);
+          console.log('📋 匹配資料數量:', matches.length);
           let detailsHTML = '';
           
           matches.forEach((match, index) => {
