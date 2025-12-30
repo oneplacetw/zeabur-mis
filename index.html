@@ -586,7 +586,7 @@
         });
 
         if (failedUpdates.length === 0) {
-          showMessage('success', `資料已成功回寫至 ${successCount} 筆 Google Sheets 資料!`);
+          showMessage('success', `已成功回寫 ${successCount} 筆資料`);
           setTimeout(() => resetForm(), 3000);
         } else {
           const errorMessages = failedUpdates.map(r => r.error || '未知錯誤').join(', ');
