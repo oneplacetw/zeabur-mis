@@ -86,24 +86,43 @@
           <div id="foundDataDetails" class="text-xs text-indigo-700 space-y-1 mt-3 border-t border-indigo-200 pt-3"></div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">填寫ＪＧＢid</label>
-          <input
-            type="text"
-            id="inputNumber"
-            placeholder="請輸入數字"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
+        <!-- ✅ Switch 切換（僅在多筆資料時顯示） -->
+        <div id="switchContainer" class="hidden mb-4">
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <p class="text-sm font-medium text-gray-700">請問是否上述資料皆為同一人</p>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="samePersonSwitch" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">租客姓名</label>
-          <textarea
-            id="inputText"
-            placeholder="請輸入文字"
-            rows="4"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-          ></textarea>
+        <!-- ✅ 單一輸入模式（default，switch 未開啟時） -->
+        <div id="singleInputMode" class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">填寫ＪＧＢid</label>
+            <input
+              type="text"
+              id="inputNumber"
+              placeholder="請輸入數字"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">租客姓名</label>
+            <textarea
+              id="inputText"
+              placeholder="請輸入文字"
+              rows="4"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- ✅ 多筆輸入模式（switch 開啟時） -->
+        <div id="multipleInputMode" class="space-y-6 hidden">
+          <div id="multipleInputsContainer"></div>
         </div>
 
         <div class="flex gap-3">
@@ -144,10 +163,35 @@
     const foundDataDetails = document.getElementById('foundDataDetails');
     const stepLine = document.getElementById('stepLine');
     const step2Circle = document.getElementById('step2Circle');
+    const switchContainer = document.getElementById('switchContainer');
+    const samePersonSwitch = document.getElementById('samePersonSwitch');
+    const singleInputMode = document.getElementById('singleInputMode');
+    const multipleInputMode = document.getElementById('multipleInputMode');
+    const multipleInputsContainer = document.getElementById('multipleInputsContainer');
 
     // 限制只能輸入數字,最多5位
     searchNumberInput.addEventListener('input', (e) => {
       e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+    });
+
+    // ✅ 限制 JGBid 只能輸入數字
+    inputNumber.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    // ✅ Switch 切換事件
+    samePersonSwitch.addEventListener('change', (e) => {
+      const isSamePerson = e.target.checked;
+      if (isSamePerson) {
+        // Switch 開啟：顯示多筆輸入模式
+        singleInputMode.classList.add('hidden');
+        multipleInputMode.classList.remove('hidden');
+        generateMultipleInputs();
+      } else {
+        // Switch 關閉：顯示單一輸入模式
+        singleInputMode.classList.remove('hidden');
+        multipleInputMode.classList.add('hidden');
+      }
     });
 
     // 顯示訊息
@@ -184,6 +228,53 @@
       step2Circle.parentElement.classList.add('text-indigo-600');
     }
 
+    // ✅ 生成多筆輸入欄位
+    function generateMultipleInputs() {
+      const matches = foundData.matches || [{ row: foundData.row, data: foundData.data }];
+      let html = '';
+      
+      matches.forEach((match, index) => {
+        html += `
+          <div class="border border-gray-200 rounded-lg p-4 bg-white">
+            <p class="font-semibold text-gray-800 mb-3">第 ${index + 1} 筆</p>
+            <div class="space-y-3">
+              <div>
+                <p class="text-xs text-gray-600 mb-1">金額: ${match.data.amount || '無'}</p>
+                <p class="text-xs text-gray-600 mb-3">付款銀行: ${match.data.bank || '無'}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">JGBid</label>
+                <input
+                  type="text"
+                  class="multiple-jgbid w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  data-row="${match.row}"
+                  placeholder="請輸入數字"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">租客姓名</label>
+                <input
+                  type="text"
+                  class="multiple-tenant w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  data-row="${match.row}"
+                  placeholder="請輸入文字"
+                />
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      multipleInputsContainer.innerHTML = html;
+      
+      // ✅ 為多筆輸入欄位加入數字限制
+      multipleInputsContainer.querySelectorAll('.multiple-jgbid').forEach(input => {
+        input.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/\D/g, '');
+        });
+      });
+    }
+
     // 重置表單
     function resetForm() {
       step1.classList.remove('hidden');
@@ -195,12 +286,17 @@
       foundData = null;
       hideMessage();
       
-      // ✅ 重置匹配筆數顯示
+      // ✅ 重置匹配筆數顯示和 switch
       const matchCount = document.getElementById('matchCount');
       if (matchCount) {
         matchCount.textContent = '';
       }
       foundDataDetails.innerHTML = '';
+      switchContainer.classList.add('hidden');
+      samePersonSwitch.checked = false;
+      singleInputMode.classList.remove('hidden');
+      multipleInputMode.classList.add('hidden');
+      multipleInputsContainer.innerHTML = '';
       
       stepLine.classList.add('bg-gray-300');
       stepLine.classList.remove('bg-indigo-600');
@@ -356,6 +452,15 @@
           
           const totalCount = data.count || matches.length;
           showMessage('success', `找到 ${totalCount} 筆匹配資料!`);
+          
+          // ✅ 如果有多筆資料，顯示 switch
+          if (totalCount > 1) {
+            switchContainer.classList.remove('hidden');
+          } else {
+            switchContainer.classList.add('hidden');
+            samePersonSwitch.checked = false;
+          }
+          
           goToStep2();
         } else {
           showMessage('error', data.message || '未找到匹配的資料');
@@ -371,12 +476,70 @@
 
     // 提交功能
     submitBtn.addEventListener('click', async () => {
-      const numValue = inputNumber.value;
-      const textValue = inputText.value;
+      // ✅ 檢查是否為多筆輸入模式
+      const isMultipleMode = !multipleInputMode.classList.contains('hidden');
+      const matches = foundData.matches || [{ row: foundData.row }];
+      
+      let updateData = [];
+      
+      if (isMultipleMode) {
+        // 多筆輸入模式：每筆資料都有獨立的欄位
+        const jgbidInputs = multipleInputsContainer.querySelectorAll('.multiple-jgbid');
+        const tenantInputs = multipleInputsContainer.querySelectorAll('.multiple-tenant');
+        
+        // 驗證所有欄位都已填寫
+        let allFilled = true;
+        jgbidInputs.forEach((input, index) => {
+          const jgbid = input.value.trim();
+          const tenant = tenantInputs[index].value.trim();
+          
+          // ✅ 驗證 JGBid 是否為數字
+          if (!jgbid || !/^\d+$/.test(jgbid)) {
+            allFilled = false;
+            showMessage('error', `第 ${index + 1} 筆的 JGBid 必須為數字格式`);
+            return;
+          }
+          
+          if (!tenant) {
+            allFilled = false;
+            showMessage('error', `第 ${index + 1} 筆的租客姓名未填寫`);
+            return;
+          }
+          
+          updateData.push({
+            row: parseInt(input.dataset.row),
+            columnG: jgbid,
+            columnH: tenant
+          });
+        });
+        
+        if (!allFilled) {
+          return;
+        }
+      } else {
+        // 單一輸入模式：所有資料共用同一組輸入
+        const numValue = inputNumber.value.trim();
+        const textValue = inputText.value.trim();
 
-      if (!numValue || !textValue) {
-        showMessage('error', '請完整填寫數字和文字');
-        return;
+        if (!numValue || !textValue) {
+          showMessage('error', '請完整填寫數字和文字');
+          return;
+        }
+
+        // ✅ 驗證 numValue 是否為數字格式
+        if (!/^\d+$/.test(numValue)) {
+          showMessage('error', 'JGBid 必須為數字格式');
+          return;
+        }
+
+        // 所有匹配的 row 都使用相同的值
+        matches.forEach(match => {
+          updateData.push({
+            row: match.row,
+            columnG: numValue,
+            columnH: textValue
+          });
+        });
       }
 
       // 顯示載入中
@@ -384,25 +547,22 @@
       submitBtn.innerHTML = '<div class="spinner"></div>送出中...';
       hideMessage();
 
-      // ✅ 取得所有需要更新的 row
-      const matches = foundData.matches || [{ row: foundData.row }];
-      const totalRows = matches.length;
+      const totalRows = updateData.length;
       
       console.log('📤 開始提交:', { 
         totalRows: totalRows, 
-        rows: matches.map(m => m.row),
-        numValue, 
-        textValue 
+        updateData: updateData,
+        isMultipleMode: isMultipleMode
       });
 
       try {
-        // ✅ 對所有匹配的 row 都執行更新
-        const updatePromises = matches.map(async (match, index) => {
-          console.log(`📝 更新第 ${index + 1}/${totalRows} 筆: 第 ${match.row} 行`);
+        // ✅ 對所有需要更新的 row 執行更新
+        const updatePromises = updateData.map(async (data, index) => {
+          console.log(`📝 更新第 ${index + 1}/${totalRows} 筆: 第 ${data.row} 行`);
           return await callAppsScript('update', {
-            row: match.row,
-            columnG: numValue,
-            columnH: textValue
+            row: data.row,
+            columnG: data.columnG,
+            columnH: data.columnH
           });
         });
 
