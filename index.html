@@ -8,7 +8,7 @@
   <style>
     .spinner {
       border: 3px solid #f3f3f3;
-      border-top: 3px solid #E8EBEB;
+      border-top: 3px solid #788A79;
       border-radius: 50%;
       width: 20px;
       height: 20px;
@@ -31,8 +31,8 @@
 
       <!-- 步驟指示器 -->
       <div id="stepIndicator" class="flex items-center justify-center mb-8">
-        <div class="flex items-center" style="color: #E8EBEB;">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium" style="background-color: #E8EBEB;">1</div>
+        <div class="flex items-center" style="color: #788A79;">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium" style="background-color: #788A79;">1</div>
           <span class="ml-2 text-sm font-medium">查詢</span>
         </div>
         <div id="stepLine" class="w-16 h-1 mx-2 bg-gray-300"></div>
@@ -55,7 +55,7 @@
             placeholder="請輸入5位數字"
             maxlength="5"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-            style="--tw-ring-color: #E8EBEB;"
+            style="--tw-ring-color: #788A79;"
           />
           <p class="text-xs text-gray-500 mt-1">注意不要變成半形文字</p>
         </div>
@@ -66,14 +66,14 @@
             type="date"
             id="searchDate"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-            style="--tw-ring-color: #E8EBEB;"
+            style="--tw-ring-color: #788A79;"
           />
         </div>
 
         <button
           id="searchBtn"
           class="w-full text-white py-3 rounded-lg font-medium transition-colors"
-          style="background-color: #E8EBEB;"
+          style="background-color: #788A79;"
         >
           🔍 開始查詢
         </button>
@@ -82,11 +82,11 @@
       <!-- 步驟 2: 填寫表單 (初始隱藏) -->
       <div id="step2" class="space-y-6 hidden">
         <div id="foundDataBox" class="p-4 rounded-lg mb-6" style="background-color: #E8EAEB;">
-          <p class="text-sm font-medium mb-2" style="color: #E8EBEB;">
+          <p class="text-sm font-medium mb-2" style="color: #788A79;">
             ✓ 已找到匹配資料
-            <span id="matchCount" class="ml-2 px-2 py-1 text-white text-xs rounded-full" style="background-color: #E8EBEB;"></span>
+            <span id="matchCount" class="ml-2 px-2 py-1 text-white text-xs rounded-full" style="background-color: #788A79;"></span>
           </p>
-          <div id="foundDataDetails" class="text-xs space-y-1 mt-3 border-t pt-3" style="color: #E8EBEB; border-color: #E8EBEB;"></div>
+          <div id="foundDataDetails" class="text-xs space-y-1 mt-3 border-t pt-3" style="color: #788A79; border-color: #788A79;"></div>
         </div>
 
         <!-- ✅ Switch 切換（僅在多筆資料時顯示） -->
@@ -95,7 +95,7 @@
             <p class="text-sm font-medium text-gray-700">請問是否上述資料皆為同一人</p>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="samePersonSwitch" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E8EBEB]" style="--tw-ring-color: #E8EBEB;"></div>
+              <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#788A79]" style="--tw-ring-color: #788A79;"></div>
             </label>
           </div>
         </div>
@@ -109,7 +109,7 @@
               id="inputNumber"
               placeholder="請輸入數字"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-            style="--tw-ring-color: #E8EBEB;"
+            style="--tw-ring-color: #788A79;"
             />
           </div>
 
@@ -120,7 +120,7 @@
               placeholder="請輸入文字"
               rows="4"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent resize-none"
-              style="--tw-ring-color: #E8EBEB;"
+              style="--tw-ring-color: #788A79;"
             ></textarea>
           </div>
         </div>
@@ -140,7 +140,7 @@
           <button
             id="submitBtn"
             class="flex-1 text-white py-3 rounded-lg font-medium transition-colors"
-            style="background-color: #E8EBEB;"
+            style="background-color: #788A79;"
           >
             📤 送出資料
           </button>
@@ -227,12 +227,12 @@
       step1.classList.add('hidden');
       step2.classList.remove('hidden');
       stepLine.classList.remove('bg-gray-300');
-      stepLine.style.backgroundColor = '#E8EBEB';
+      stepLine.style.backgroundColor = '#788A79';
       step2Circle.classList.remove('bg-gray-300');
-      step2Circle.style.backgroundColor = '#E8EBEB';
+      step2Circle.style.backgroundColor = '#788A79';
       step2Circle.style.color = 'white';
       step2Circle.parentElement.classList.remove('text-gray-400');
-      step2Circle.parentElement.style.color = '#E8EBEB';
+      step2Circle.parentElement.style.color = '#788A79';
     }
 
     // ✅ 生成多筆輸入欄位
@@ -250,7 +250,7 @@
                 <input
                   type="text"
                   class="multiple-jgbid w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                  style="--tw-ring-color: #E8EBEB;"
+                  style="--tw-ring-color: #788A79;"
                   data-row="${match.row}"
                   placeholder="請輸入數字"
                 />
@@ -260,7 +260,7 @@
                 <input
                   type="text"
                   class="multiple-tenant w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                  style="--tw-ring-color: #E8EBEB;"
+                  style="--tw-ring-color: #788A79;"
                   data-row="${match.row}"
                   placeholder="請輸入文字"
                 />
@@ -446,8 +446,8 @@
           
           matches.forEach((match, index) => {
             detailsHTML += `
-              <div class="mb-3 pb-3 ${index < matches.length - 1 ? 'border-b' : ''}" style="border-color: #E8EBEB;">
-                <p class="font-semibold mb-1" style="color: #E8EBEB;">第 ${index + 1} 筆</p>
+              <div class="mb-3 pb-3 ${index < matches.length - 1 ? 'border-b' : ''}" style="border-color: #788A79;">
+                <p class="font-semibold mb-1" style="color: #788A79;">第 ${index + 1} 筆</p>
                 <p><strong>金額:</strong> ${match.data.amount || '無'}</p>
                 <p><strong>付款銀行:</strong> ${match.data.bank || '無'}</p>
               </div>
